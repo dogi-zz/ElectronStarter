@@ -1,6 +1,8 @@
 const rimraf = require('rimraf')
 const path = require('path')
-const {exec, spawn} = require('child_process');
+const {exec} = require('child_process');
+
+const NAME = 'electron_starter';
 
 const rm = (path) => new Promise(res => {
   rimraf(path, () => {
@@ -30,6 +32,6 @@ let promise = Promise.resolve()
 
 ['src', 'server', 'common'].forEach(dir => {
   promise = promise.then(() => console.info(`.... cleanup ${dir}`))
-    .then(() => rm(path.resolve('out/electron_starter-linux-x64/resources/app/', dir)));
+    .then(() => rm(path.resolve(`out/${NAME}-linux-x64/resources/app/`, dir)));
 })
 
