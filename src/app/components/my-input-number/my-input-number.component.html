@@ -1,0 +1,7 @@
+<input type="text"
+       (keydown.enter)="parseValue()"
+       (blur)="parseValue()"
+       (ngModelChange)="touch()"
+       pInputText [(ngModel)]="inputString"
+       [ngStyle]="{width: widthString, color: colorString, textAlign: 'right'}"
+/>

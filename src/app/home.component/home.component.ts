@@ -1,5 +1,6 @@
 import {HttpClient} from '@angular/common/http';
 import {Component, NgZone, OnInit} from '@angular/core';
+import {Subject} from 'rxjs';
 import {AppComponent} from '../app.component';
 
 
@@ -11,7 +12,10 @@ import {AppComponent} from '../app.component';
 export class HomeComponent implements OnInit {
 
   public files: string[];
-  public countDown: number;
+
+  public countDownSet = 10;
+  public countDownOut: number;
+  private countDownSender: Subject<any>;
 
   constructor(
     private app: AppComponent,
@@ -27,8 +31,12 @@ export class HomeComponent implements OnInit {
 
     this.files = await this.http.get<string[]>(`${url}/files`).toPromise();
 
-    const subscription = this.app.getSocket({get: 'countdown'}).subscribe(data => {
-      this.countDown = data as number;
+    this.countDownSender = new Subject<any>();
+    const socked = await this.app.getSocket(this.countDownSender);
+    console.info(socked);
+
+    const subscription = socked.subscribe(data => {
+      this.countDownOut = data as number;
     }, err => {
       console.error(err);
     }, () => {
@@ -38,4 +46,9 @@ export class HomeComponent implements OnInit {
 
   }
 
+  public countDown() {
+    if (this.countDownSet > 1){
+      this.countDownSender.next({get: 'countdown', number : this.countDownSet});
+    }
+  }
 }

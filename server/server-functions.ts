@@ -18,14 +18,14 @@ export class SeverFunctions {
 
     if (requestData && requestData.get === 'countdown') {
       const subject = new Subject<number>();
-      let counter = 10;
+      let counter: number = Math.max(requestData.number || 10, 0);
       const ivl = setInterval(() => {
-        subject.next(counter);
-        if (counter === 0) {
+        counter-= 0.1;
+        subject.next(Math.round(counter * 10) / 10);
+        if (counter <= 0) {
           clearInterval(ivl);
         }
-        counter--;
-      }, 1000);
+      }, 100);
       return subject;
     }
 

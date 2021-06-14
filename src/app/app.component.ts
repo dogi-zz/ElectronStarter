@@ -1,6 +1,6 @@
 import {HttpClient} from '@angular/common/http';
 import {Component, NgZone, OnInit} from '@angular/core';
-import {Observable} from 'rxjs';
+import {BehaviorSubject, Observable, Subscriber, Subscription} from 'rxjs';
 
 interface ServerData {
   port: number;
@@ -33,55 +33,113 @@ export class AppComponent implements OnInit {
     });
   }
 
-  public getSocket<T>(requestData: any): Observable<T> {
-    return new Observable<T>((observer) => {
-      let socket: WebSocket;
-      this.wsUrl.then(wsUrl => {
+  // tslint:disable-next-line:no-any
+  public getSocket<T>(requestData: any): Promise<Observable<T>> {
+    // tslint:disable-next-line:no-any
+    const messageObservable = (requestData instanceof  Observable) ? requestData : new BehaviorSubject<any>(requestData);
+    let messageSubscription: Subscription;
 
-        //socket = new WebSocket(`ws://${serverInfo.wsHost}:${serverInfo.wsPort}`);
-        socket = new WebSocket(wsUrl);
-        socket.onopen = (e) => {
-          socket.send(JSON.stringify(requestData));
-        };
-        socket.onmessage = (event) => {
-          try {
-            if (event.data &&( typeof event.data) === 'string'){
-              const data = JSON.parse(event.data);
-              observer.next(data);
-            } else {
-              console.info(event);
-            }
-          } catch (e){
-            console.error(e);
-            console.error(event);
-          }
-        };
-        socket.onclose = (event) => {
-          if (event.wasClean) {
-            console.info(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-          } else {
-            // e.g. server process killed or network down
-            // event.code is usually 1006 in this case
-            console.info('[close] Connection died');
-          }
-          observer.complete();
-        };
-        socket.onerror = (error) => {
-          console.info(`[error] ${error}`);
-          observer.error(error);
-        };
-      });
+    let resultRes: (data: Observable<T>) => void;
+    // tslint:disable-next-line:no-any
+    let resultRej: (err: any) => void;
+    const result: Promise<Observable<T>> = new Promise((res, rej) => {
+      resultRes = res;
+      resultRej = rej;
+    });
+
+    const subscribers: Subscriber<T>[] = [];
+
+    const observable = new Observable<T>((observer) => {
+      subscribers.push(observer);
       return ({
         unsubscribe() {
-          console.log('unsubscribbed');
-          if (socket) {
-            socket.close();
+          const index = subscribers.indexOf(observer);
+          if (index >= 0) {
+            subscribers.splice(index, 1);
+          }
+          if (!subscribers.length) {
+            if (socket) {
+              socket.close();
+            }
+            if (messageSubscription) {
+              messageSubscription.unsubscribe();
+              messageSubscription = null;
+            }
           }
         },
       });
     });
 
 
+    let socket: WebSocket;
+    let firstResultReturned = false;
+    this.wsUrl.then(wsUrl => {
+
+      //socket = new WebSocket(`ws://${serverInfo.wsHost}:${serverInfo.wsPort}`);
+      socket = new WebSocket(wsUrl);
+      socket.onopen = (e) => {
+        if (!firstResultReturned) {
+          resultRes(observable);
+          firstResultReturned = true;
+        }
+        messageSubscription = messageObservable.subscribe(message => {
+          socket.send(JSON.stringify(message));
+        });
+      };
+      socket.onmessage = (event) => {
+        try {
+          if (event.data && (typeof event.data) === 'string') {
+            const data = JSON.parse(event.data);
+            subscribers.forEach(subscriber => subscriber.next(data));
+          } else {
+            // tslint:disable-next-line:no-console
+            console.info(event);
+          }
+        } catch (e) {
+          // tslint:disable-next-line:no-console
+          console.error(e);
+          // tslint:disable-next-line:no-console
+          console.error(event);
+        }
+      };
+      socket.onclose = (event) => {
+        if (messageSubscription) {
+          messageSubscription.unsubscribe();
+          messageSubscription = null;
+        }
+        if (event.wasClean) {
+          // tslint:disable-next-line:no-console
+          console.info(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+        } else {
+          // e.g. server process killed or network down
+          // event.code is usually 1006 in this case
+          // tslint:disable-next-line:no-console
+          console.info('[close] Connection died');
+
+          const error = new Error('[Connection died');
+          if (!firstResultReturned) {
+            resultRej(error);
+            firstResultReturned = true;
+          } else {
+            subscribers.forEach(subscriber => subscriber.error(error));
+          }
+        }
+        subscribers.forEach(subscriber => subscriber.complete());
+      };
+      socket.onerror = (error) => {
+        // tslint:disable-next-line:no-console
+        console.error(`[error] ${error}`);
+        if (!firstResultReturned) {
+          resultRej(error);
+          firstResultReturned = true;
+        } else {
+          subscribers.forEach(subscriber => subscriber.error(error));
+        }
+      };
+    });
+
+
+    return result;
   }
 
 
