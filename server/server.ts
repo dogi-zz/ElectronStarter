@@ -1,12 +1,21 @@
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
 import * as express from 'express';
+import {Request, Response} from 'express';
 import * as fs from 'fs';
+import {AddressInfo} from 'net';
 import * as path from 'path';
 import {Subscription} from 'rxjs';
 import * as ws from 'ws';
 import {SeverFunctions} from './server-functions';
 
+let DATA_DIR = path.resolve(process.cwd(), 'data.dir');
+if (fs.existsSync(path.resolve(process.cwd(), 'data.dir'))) {
+  DATA_DIR = path.resolve(process.cwd(), fs.readFileSync(path.resolve(process.cwd(), 'data.dir'), 'utf-8'));
+}
+
+console.info('CWD', process.cwd());
+console.info('DATA_DIR', DATA_DIR);
 
 const app = express();
 app.use(cors());
@@ -51,8 +60,9 @@ export const startServer = (port: number) => {
       let subscription: Subscription;
       // When you receive a message, send that message to every socket.
       socket.on('message', (msg) => {
+        console.info({msg});
         try {
-          const message = JSON.parse(msg);
+          const message = JSON.parse(`${msg}`);
           const subject = severFunctions.getSocketData(message);
           if (subject) {
             subscription = subject.subscribe(data => {
@@ -74,8 +84,8 @@ export const startServer = (port: number) => {
 
 
     const server = app.listen(port, '0.0.0.0', () => {
-      serverPort = server.address().port;
-      console.log('Drive Log Server listening at Port %s', serverPort);
+      serverPort = (server.address() as AddressInfo).port;
+      console.log('Electron Server listening at Port %s', serverPort);
       res(serverPort);
     });
     server.on('upgrade', (request, socket, head) => {

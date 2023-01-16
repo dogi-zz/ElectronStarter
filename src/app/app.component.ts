@@ -13,8 +13,6 @@ interface ServerData {
 })
 export class AppComponent implements OnInit {
 
-  public title = 'ElectronStarter';
-
   public serverUrl: Promise<string>;
   public wsUrl: Promise<string>;
 
@@ -25,12 +23,18 @@ export class AppComponent implements OnInit {
   }
 
   public ngOnInit(): void {
-    this.serverUrl = this.http.get<ServerData>(`${document.baseURI}/assets/server.json`).toPromise().then(data => {
-      return `http://localhost:${data.port}`;
-    });
-    this.wsUrl = this.http.get<ServerData>(`${document.baseURI}/assets/server.json`).toPromise().then(data => {
-      return `ws://localhost:${data.port}`;
-    });
+    const match = window.location.search.match(/port=(\d+)/);
+    if (match){
+      this.serverUrl = Promise.resolve(`http://localhost:${match[1]}`)
+      this.wsUrl = Promise.resolve(`ws://localhost:${match[1]}`)
+    } else {
+      this.serverUrl = this.http.get<ServerData>(`${document.baseURI}assets/server.json`).toPromise().then(data => {
+        return `http://localhost:${data.port}`;
+      });
+      this.wsUrl = this.http.get<ServerData>(`${document.baseURI}assets/server.json`).toPromise().then(data => {
+        return `ws://localhost:${data.port}`;
+      });
+    }
   }
 
   // tslint:disable-next-line:no-any

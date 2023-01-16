@@ -23,6 +23,8 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
             "aot": true,
+            "sourceMap": true,
+            "optimization": false,
             "assets": [
               "src/peaks.js",
               "src/favicon.ico",
@@ -47,7 +49,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "extractLicenses": true,
               "vendorChunk": false,
@@ -101,7 +102,6 @@
       }
     }
   },
-  "defaultProject": "ElectronStarter",
   "cli": {
     "analytics": false
   }

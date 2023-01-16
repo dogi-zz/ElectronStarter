@@ -8,7 +8,7 @@ function createWindow(port) {
     autoHideMenuBar: true,
   })
 
-  return win.loadURL(`http://localhost:${port}/app/index.html`);
+  return win.loadURL(`http://localhost:${port}/app/index.html?port=${port}`);
 }
 
 startServer(0).then((port) => {
