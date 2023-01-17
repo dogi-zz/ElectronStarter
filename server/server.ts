@@ -7,7 +7,7 @@ import {AddressInfo} from 'net';
 import * as path from 'path';
 import {Subscription} from 'rxjs';
 import * as ws from 'ws';
-import {SeverFunctions} from './server-functions';
+import {Backend} from './backend';
 
 let DATA_DIR = path.resolve(process.cwd(), 'data.dir');
 if (fs.existsSync(path.resolve(process.cwd(), 'data.dir'))) {
@@ -51,7 +51,7 @@ export const startServer = (port: number) => {
       }
     });
 
-    const severFunctions = new SeverFunctions(app).init();
+    const severFunctions = new Backend(app).init();
 
 
     const wsServer = new ws.Server({noServer: true});

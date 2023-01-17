@@ -36,4 +36,3 @@ let promise = Promise.resolve()
     .then(() => rm(path.resolve(`out/${NAME}-linux-x64/resources/app/`, dir)))
     .then(() => fs.writeFileSync(`out/${NAME}-linux-x64/data.dir`, '../../data', 'utf-8'));
 })
-

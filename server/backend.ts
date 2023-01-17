@@ -2,7 +2,7 @@ import {Request, Response} from 'express';
 import * as fs from 'fs';
 import {Observable, Subject} from 'rxjs';
 
-export class SeverFunctions {
+export class Backend {
 
   constructor(private app: any) {
   }
