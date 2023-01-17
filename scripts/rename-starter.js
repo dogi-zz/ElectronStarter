@@ -41,7 +41,7 @@ indexHtmlLines.forEach((line, idx) => {
 fs.writeFileSync('src/index.html', indexHtmlLines.join('\n'), 'utf-8');
 
 const angularJson = JSON.parse(fs.readFileSync('angular.json', 'utf-8'));
-const defaultProject = angularJson.projects[angularJson.defaultProject];
+const defaultProject = Object.values(angularJson.projects)[0];
 if (defaultProject && angularJson.defaultProject !== camelName){
   defaultProject.architect.build.options.outputPath = `dist/${camelName}`;
   defaultProject.architect.serve.options.browserTarget = `${camelName}:build`;
